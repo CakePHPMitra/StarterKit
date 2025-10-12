@@ -1,0 +1,8 @@
+name: ddev-vscode-devcontainer
+repository: tyler36/ddev-vscode-devcontainer
+version: 1.2.2
+install_date: "2025-10-12T21:34:30+05:30"
+project_files: []
+global_files:
+    - commands/host/code
+removal_actions: []
