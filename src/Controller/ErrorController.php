@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -14,6 +15,7 @@ declare(strict_types=1);
  * @since         3.3.4
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
+
 namespace App\Controller;
 
 use Cake\Event\EventInterface;
@@ -43,6 +45,15 @@ class ErrorController extends AppController
      */
     public function beforeFilter(EventInterface $event): void
     {
+        parent::beforeFilter($event);
+
+        // $userAgent = $this->request->getHeaderLine('User-Agent');
+        // $acceptHeader = $this->request->hasHeader('Accept') ? $this->request->getHeader('Accept')[0] : null;
+
+        if ($this->request->accepts('application/json') || strtolower($this->request->getParam('prefix')) === 'api') {
+            $this->viewBuilder()->setClassName('Json');
+            // $this->addViewClasses([JsonView::class]);
+        }
     }
 
     /**
@@ -64,7 +75,5 @@ class ErrorController extends AppController
      * @param \Cake\Event\EventInterface<\Cake\Controller\Controller> $event Event.
      * @return void
      */
-    public function afterFilter(EventInterface $event): void
-    {
-    }
+    public function afterFilter(EventInterface $event): void {}
 }

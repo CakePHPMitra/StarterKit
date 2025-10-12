@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Routes configuration.
  *
@@ -29,6 +30,7 @@ use Cake\Routing\RouteBuilder;
  * So you can use `$this` to reference the application class instance
  * if required.
  */
+
 return function (RouteBuilder $routes): void {
     /*
      * The default class to use for all routes
@@ -93,4 +95,9 @@ return function (RouteBuilder $routes): void {
      * });
      * ```
      */
+    $routes->prefix('api', function (RouteBuilder $builder): void {
+        $builder->setExtensions(['json']);    // enable .json
+        $builder->setRouteClass(DashedRoute::class);    // convert url into PascalCase for controllers, camelCase for actions mapping
+        $builder->fallbacks();
+    });
 };

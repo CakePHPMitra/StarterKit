@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -14,6 +15,7 @@ declare(strict_types=1);
  * @since     3.3.0
  * @license   https://opensource.org/licenses/mit-license.php MIT License
  */
+
 namespace App;
 
 use Cake\Core\Configure;
@@ -85,9 +87,12 @@ class Application extends BaseApplication
 
             // Cross Site Request Forgery (CSRF) Protection Middleware
             // https://book.cakephp.org/5/en/security/csrf.html#cross-site-request-forgery-csrf-middleware
-            ->add(new CsrfProtectionMiddleware([
+            ->add((new CsrfProtectionMiddleware([
                 'httponly' => true,
-            ]));
+            ]))->skipCheckCallback(function ($request) {
+                // Skip token check for API URLs.
+                return (strtolower($request->getParam('prefix') ?? '') === 'api') ? true : false;
+            }));
 
         return $middlewareQueue;
     }
@@ -99,7 +104,5 @@ class Application extends BaseApplication
      * @return void
      * @link https://book.cakephp.org/5/en/development/dependency-injection.html#dependency-injection
      */
-    public function services(ContainerInterface $container): void
-    {
-    }
+    public function services(ContainerInterface $container): void {}
 }
