@@ -14,8 +14,8 @@ $this->assign('description', 'Welcome to Cakephp5 - A modern lightweight PHP app
     <h1 style="font-size: 2.5rem; margin-bottom: 20px; color: #333;">
         Welcome to CakePHP
     </h1>
-    <p style="font-size: 1.2rem; color: #666; max-width: 600px; margin: 0 auto 30px;">
-        A modern lightweight PHP application.
+    <p style="color: #666; max-width: 600px; margin: 0 auto 30px;">
+        A modern lightweight PHP application with DDEV, Vite HMR & asset bundling.
     </p>
     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
         <a href="https://book.cakephp.org/5/" target="_blank" rel="noopener" class="btn btn-primary">
@@ -54,7 +54,7 @@ $this->assign('description', 'Welcome to Cakephp5 - A modern lightweight PHP app
         <h4>Hot Module Replacement Active</h4>
         <p>Edit <code>resources/css/app.css</code> to change this box's style instantly!</p>
     </div>
-    <p style="margin-top: 15px; color: #666; font-size: 1rem;">
+    <p style="margin-top: 15px; color: #666; line-height: 1.6;">
         Try changing the gradient colors in <code>resources/css/app.css</code> while running <code>npm run dev</code> to see HMR in action.
     </p>
 </div>
