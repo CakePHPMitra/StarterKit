@@ -15,6 +15,8 @@ A ready-to-use CakePHP 5 starter kit with DDEV, Redis support, and environment v
 - Environment prerequisite validation before boot
 - Database connection setup wizard
 - Vite integration with Hot Module Replacement (HMR)
+- **CakeSPA** - Server-driven SPA architecture (Livewire-like reactivity)
+- **DbConfig** - Database-driven application configuration
 
 ## Requirements
 
@@ -101,6 +103,23 @@ A ready-to-use CakePHP 5 starter kit with DDEV, Redis support, and environment v
 - Redis is automatically enabled when `REDIS_HOST` is set
 - Database configuration can be done via the setup wizard or manually in `.env`
 
+## Routing
+
+This starter kit uses CakePHP's fallback routes for convenience. All controller actions are automatically routed using the pattern `/{controller}/{action}`.
+
+Custom routes are defined in `config/routes.php`. Add explicit routes for:
+- SEO-friendly URLs
+- Custom URL patterns
+- API versioning
+
+```php
+// Example custom routes
+$builder->connect('/about', ['controller' => 'Pages', 'action' => 'display', 'about']);
+$builder->connect('/contact', ['controller' => 'Contact', 'action' => 'index']);
+```
+
+**Note:** Controller methods that should not be accessible via URL should be marked as `protected` or `private`.
+
 ## Vite Integration
 
 This starter kit includes [CakePhpViteHelper](https://github.com/CakePHPMitra/Vite-Plugin) for modern frontend asset bundling with Hot Module Replacement.
@@ -169,6 +188,52 @@ Assets are loaded via the Vite helper in your layout:
 Frontend assets are located in the `resources/` directory:
 - `resources/js/app.js` - Main JavaScript entry
 - `resources/css/app.css` - Main stylesheet
+
+## CakeSPA Plugin
+
+This starter kit includes [CakeSPA](https://github.com/CakePHPMitra/spa) for server-driven SPA architecture - build reactive applications without JavaScript frameworks.
+
+### Features
+
+- **SPA Navigation** - Load pages via AJAX with History API support
+- **Reactive Components** - Livewire-like reactivity without writing JavaScript
+- **CSRF Compatible** - Full security integration with CakePHP
+
+### Usage
+
+The SPA helper and scripts are already loaded in the default layout. Use SPA navigation links:
+
+```php
+<?= $this->Spa->navLink('Home', '/') ?>
+<?= $this->Spa->navLink('About', '/about') ?>
+```
+
+Create reactive elements:
+
+```php
+<p>Count: <?= $this->Spa->target('count', $count) ?></p>
+<?= $this->Spa->button('Increment', '/counter/increment') ?>
+```
+
+See the [CakeSPA documentation](https://github.com/CakePHPMitra/spa) for more details.
+
+## DbConfig Plugin
+
+This starter kit includes [DbConfig](https://github.com/CakePHPMitra/dbconfig) for storing application configuration in the database.
+
+### Setup
+
+Run the DbConfig migrations:
+
+```bash
+bin/cake migrations migrate --plugin DbConfig
+```
+
+### Usage
+
+Access the configuration dashboard at `/db-config/app-settings`. Configuration values are automatically loaded and accessible via CakePHP's `Configure::read()`.
+
+See the [DbConfig documentation](https://github.com/CakePHPMitra/dbconfig) for more details.
 
 ## Contributing
 

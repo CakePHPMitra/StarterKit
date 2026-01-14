@@ -335,14 +335,11 @@ return [
             'log' => false,
 
             /*
-             * Set identifier quoting to true if you are using reserved words or
-             * special characters in your table or column names. Enabling this
-             * setting will result in queries built using the Query Builder having
-             * identifiers quoted when creating SQL. It should be noted that this
-             * decreases performance because each query needs to be traversed and
-             * manipulated before being executed.
+             * SECURITY: Identifier quoting enabled for defense-in-depth.
+             * Prevents issues with reserved words and provides additional
+             * protection against SQL injection via dynamic identifiers.
              */
-            'quoteIdentifiers' => false,
+            'quoteIdentifiers' => true,
 
             /*
              * During development, if using MySQL < 5.6, uncommenting the
@@ -365,7 +362,7 @@ return [
             'encoding' => 'utf8mb4',
             'flags' => [],
             'cacheMetadata' => true,
-            'quoteIdentifiers' => false,
+            'quoteIdentifiers' => true,
             'log' => false,
             //'init' => ['SET GLOBAL innodb_stats_on_metadata = 0'],
         ],

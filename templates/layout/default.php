@@ -29,9 +29,11 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
     <title><?= $this->fetch('title') ?></title>
 
     <?= $this->Html->meta('icon') ?>
+    <?= $this->Spa->csrfMeta() ?>
 
     <?= $this->Html->css(['normalize.min', 'milligram.min', 'fonts', 'cake']) ?>
     <?= $this->Vite->asset(['resources/js/app.js', 'resources/css/app.css']) ?>
+    <?= $this->Spa->scripts() ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
@@ -51,7 +53,7 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
     <main class="main">
         <div class="container">
             <?= $this->Flash->render() ?>
-            <?= $this->fetch('content') ?>
+            <?= $this->Spa->contentContainer($this->fetch('content')) ?>
         </div>
     </main>
     <footer>

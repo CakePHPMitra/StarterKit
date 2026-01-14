@@ -32,4 +32,6 @@ return [
     'Bake' => ['onlyCli' => true, 'optional' => true],
     'Migrations' => ['onlyCli' => true],
     'CakePhpViteHelper' => [],
+    'CakeSPA' => [],
+    'DbConfig' => [],
 ];

@@ -22,6 +22,7 @@
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 
+use Cake\Core\Configure;
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\RouteBuilder;
 
@@ -64,18 +65,18 @@ return function (RouteBuilder $routes): void {
          */
         $builder->connect('/pages/*', 'Pages::display');
 
+        // Health check route
+        $builder->connect('/health', ['controller' => 'Pages', 'action' => 'health']);
+
+        // SPA counter demo routes
+        $builder->connect('/counter/increment', ['controller' => 'Pages', 'action' => 'increment']);
+        $builder->connect('/counter/decrement', ['controller' => 'Pages', 'action' => 'decrement']);
+        $builder->connect('/counter/reset', ['controller' => 'Pages', 'action' => 'reset']);
+
         /*
          * Connect catchall routes for all controllers.
          *
-         * The `fallbacks` method is a shortcut for
-         *
-         * ```
-         * $builder->connect('/{controller}', ['action' => 'index']);
-         * $builder->connect('/{controller}/{action}/*', []);
-         * ```
-         *
-         * It is NOT recommended to use fallback routes after your initial prototyping phase!
-         * See https://book.cakephp.org/5/en/development/routing.html#fallbacks-method for more information
+         * See https://book.cakephp.org/5/en/development/routing.html#fallbacks-method
          */
         $builder->fallbacks();
     });
@@ -98,6 +99,7 @@ return function (RouteBuilder $routes): void {
     $routes->prefix('api', function (RouteBuilder $builder): void {
         $builder->setExtensions(['json']);    // enable .json
         $builder->setRouteClass(DashedRoute::class);    // convert url into PascalCase for controllers, camelCase for actions mapping
+
         $builder->fallbacks();
     });
 };

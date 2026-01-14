@@ -16,7 +16,6 @@
         <testsuite name="app">
             <directory>tests/TestCase/</directory>
         </testsuite>
-        <!-- Add plugin test suites here. -->
     </testsuites>
 
     <!-- Load extension for fixtures -->
@@ -28,7 +27,6 @@
     <source>
         <include>
             <directory suffix=".php">src/</directory>
-            <directory suffix=".php">plugins/*/src/</directory>
         </include>
         <exclude>
             <file>src/Console/Installer.php</file>

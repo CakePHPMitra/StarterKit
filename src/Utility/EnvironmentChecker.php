@@ -51,17 +51,25 @@ class EnvironmentChecker
     /**
      * Update .env file with database configuration
      *
+     * SECURITY NOTES:
+     * - .env files store credentials in plaintext by design
+     * - File permissions are set to 0600 (owner read/write only)
+     * - Ensure .env is in .gitignore (never commit to version control)
+     * - For production, consider using system environment variables instead
+     *
      * @param array $config Database configuration
      * @return bool
      */
     public static function updateEnvFile(array $config): bool
     {
         $envFile = ROOT . DS . 'config' . DS . '.env';
+        $isNewFile = false;
 
         if (!file_exists($envFile)) {
             $exampleFile = ROOT . DS . 'config' . DS . '.env.example';
             if (file_exists($exampleFile)) {
                 copy($exampleFile, $envFile);
+                $isNewFile = true;
             } else {
                 return false;
             }
@@ -98,6 +106,14 @@ class EnvironmentChecker
             $content .= "\nexport DATABASE_URL=\"{$dbUrl}\"\n";
         }
 
-        return file_put_contents($envFile, $content) !== false;
+        $result = file_put_contents($envFile, $content);
+
+        if ($result !== false) {
+            // SECURITY: Set restrictive file permissions (owner read/write only)
+            // This prevents other users on the system from reading credentials
+            @chmod($envFile, 0600);
+        }
+
+        return $result !== false;
     }
 }

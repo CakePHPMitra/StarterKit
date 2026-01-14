@@ -42,11 +42,13 @@ class AppController extends Controller
         parent::initialize();
 
         $this->loadComponent('Flash');
+        $this->loadComponent('CakeSPA.Spa');
 
         /*
-         * Enable the following component for recommended CakePHP form protection settings.
+         * Enable FormProtection for recommended CakePHP form protection settings.
+         * This protects against form tampering and provides CSRF-like protection for forms.
          * see https://book.cakephp.org/5/en/controllers/components/form-protection.html
          */
-        //$this->loadComponent('FormProtection');
+        $this->loadComponent('FormProtection');
     }
 }

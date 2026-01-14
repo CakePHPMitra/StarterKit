@@ -5,6 +5,8 @@ namespace App\Middleware;
 
 use App\Utility\EnvironmentChecker;
 use Cake\Http\Response;
+use Cake\Http\Session;
+use Cake\Utility\Security;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -20,6 +22,26 @@ use function Cake\Core\env;
 class EnvironmentCheckMiddleware implements MiddlewareInterface
 {
     /**
+     * CSRF token name used in session and form
+     */
+    private const CSRF_TOKEN_NAME = '_setup_csrf_token';
+
+    /**
+     * Rate limit session key
+     */
+    private const RATE_LIMIT_KEY = '_setup_rate_limit';
+
+    /**
+     * Maximum setup attempts allowed within the time window
+     */
+    private const RATE_LIMIT_ATTEMPTS = 5;
+
+    /**
+     * Rate limit time window in seconds (15 minutes)
+     */
+    private const RATE_LIMIT_WINDOW = 900;
+
+    /**
      * Process incoming request
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request Request
@@ -31,29 +53,176 @@ class EnvironmentCheckMiddleware implements MiddlewareInterface
         $path = $request->getUri()->getPath();
         $method = $request->getMethod();
 
-        // Handle database setup form submission directly (bypasses CSRF)
-        if ($path === '/setup/database' && $method === 'POST') {
-            return $this->handleDatabaseSetup($request);
-        }
-
-        // Allow setup routes to pass through
-        if (str_starts_with($path, '/setup')) {
-            return $handler->handle($request);
-        }
-
-        // Allow static assets
+        // Allow static assets first (no database check needed)
         if (preg_match('/\.(css|js|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/i', $path)) {
             return $handler->handle($request);
         }
 
-        // Check if database is required and failing
+        // Check database status once for all route decisions
         $dbCheck = $this->checkDatabase();
+        $dbConfigured = !$dbCheck['required'] || $dbCheck['status'];
 
+        // Handle setup routes
+        if (str_starts_with($path, '/setup')) {
+            // SECURITY: Block setup routes if database is already configured
+            if ($dbConfigured) {
+                return $this->redirectToHome();
+            }
+
+            // Handle database setup form submission with CSRF validation
+            if ($path === '/setup/database' && $method === 'POST') {
+                return $this->handleDatabaseSetup($request);
+            }
+
+            // Allow other setup routes to pass through
+            return $handler->handle($request);
+        }
+
+        // Show database setup if required and failing
         if ($dbCheck['required'] && !$dbCheck['status']) {
-            return $this->renderDatabaseSetup($dbCheck);
+            return $this->renderDatabaseSetup($request, $dbCheck);
         }
 
         return $handler->handle($request);
+    }
+
+    /**
+     * Generate or retrieve CSRF token from session
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return string
+     */
+    protected function getCsrfToken(ServerRequestInterface $request): string
+    {
+        $session = $this->getSession($request);
+
+        $token = $session->read(self::CSRF_TOKEN_NAME);
+        if (!$token) {
+            $token = bin2hex(Security::randomBytes(16));
+            $session->write(self::CSRF_TOKEN_NAME, $token);
+        }
+
+        return $token;
+    }
+
+    /**
+     * Validate CSRF token from request
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return bool
+     */
+    protected function validateCsrfToken(ServerRequestInterface $request): bool
+    {
+        $session = $this->getSession($request);
+        $sessionToken = $session->read(self::CSRF_TOKEN_NAME);
+
+        if (!$sessionToken) {
+            return false;
+        }
+
+        $data = (array)$request->getParsedBody();
+        $formToken = $data[self::CSRF_TOKEN_NAME] ?? '';
+
+        // Use hash_equals for timing-safe comparison
+        return hash_equals($sessionToken, $formToken);
+    }
+
+    /**
+     * Get session from request
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return \Cake\Http\Session
+     */
+    protected function getSession(ServerRequestInterface $request): Session
+    {
+        $session = $request->getAttribute('session');
+        if (!$session) {
+            $session = new Session();
+            $session->start();
+        }
+
+        return $session;
+    }
+
+    /**
+     * Regenerate CSRF token after successful form submission
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return void
+     */
+    protected function regenerateCsrfToken(ServerRequestInterface $request): void
+    {
+        $session = $this->getSession($request);
+        $session->delete(self::CSRF_TOKEN_NAME);
+    }
+
+    /**
+     * Check if rate limit has been exceeded
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return bool True if within limit, false if exceeded
+     */
+    protected function checkRateLimit(ServerRequestInterface $request): bool
+    {
+        $session = $this->getSession($request);
+        $attempts = $session->read(self::RATE_LIMIT_KEY) ?? [];
+
+        // Clean old attempts outside the time window
+        $now = time();
+        $attempts = array_filter($attempts, fn($timestamp) => ($now - $timestamp) < self::RATE_LIMIT_WINDOW);
+
+        // Update cleaned attempts in session
+        $session->write(self::RATE_LIMIT_KEY, array_values($attempts));
+
+        return count($attempts) < self::RATE_LIMIT_ATTEMPTS;
+    }
+
+    /**
+     * Record a failed setup attempt for rate limiting
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return void
+     */
+    protected function recordFailedAttempt(ServerRequestInterface $request): void
+    {
+        $session = $this->getSession($request);
+        $attempts = $session->read(self::RATE_LIMIT_KEY) ?? [];
+
+        // Clean old attempts and add new one
+        $now = time();
+        $attempts = array_filter($attempts, fn($timestamp) => ($now - $timestamp) < self::RATE_LIMIT_WINDOW);
+        $attempts[] = $now;
+
+        $session->write(self::RATE_LIMIT_KEY, array_values($attempts));
+    }
+
+    /**
+     * Clear rate limit tracking (on successful setup)
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return void
+     */
+    protected function clearRateLimit(ServerRequestInterface $request): void
+    {
+        $session = $this->getSession($request);
+        $session->delete(self::RATE_LIMIT_KEY);
+    }
+
+    /**
+     * Get remaining attempts count
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return int
+     */
+    protected function getRemainingAttempts(ServerRequestInterface $request): int
+    {
+        $session = $this->getSession($request);
+        $attempts = $session->read(self::RATE_LIMIT_KEY) ?? [];
+
+        $now = time();
+        $attempts = array_filter($attempts, fn($timestamp) => ($now - $timestamp) < self::RATE_LIMIT_WINDOW);
+
+        return max(0, self::RATE_LIMIT_ATTEMPTS - count($attempts));
     }
 
     /**
@@ -64,6 +233,30 @@ class EnvironmentCheckMiddleware implements MiddlewareInterface
      */
     protected function handleDatabaseSetup(ServerRequestInterface $request): Response
     {
+        // SECURITY: Check rate limit first
+        if (!$this->checkRateLimit($request)) {
+            $dbCheck = [
+                'required' => true,
+                'status' => false,
+                'error' => 'Too many attempts. Please wait 15 minutes before trying again.',
+            ];
+
+            return $this->renderDatabaseSetup($request, $dbCheck);
+        }
+
+        // Validate CSRF token
+        if (!$this->validateCsrfToken($request)) {
+            $this->recordFailedAttempt($request);
+            $remaining = $this->getRemainingAttempts($request);
+            $dbCheck = [
+                'required' => true,
+                'status' => false,
+                'error' => "Invalid security token. Please refresh the page and try again. ({$remaining} attempts remaining)",
+            ];
+
+            return $this->renderDatabaseSetup($request, $dbCheck);
+        }
+
         $data = (array)$request->getParsedBody();
 
         $config = [
@@ -79,27 +272,50 @@ class EnvironmentCheckMiddleware implements MiddlewareInterface
         $result = EnvironmentChecker::testDatabaseConnection($config);
 
         if (!$result['success']) {
+            $this->recordFailedAttempt($request);
+            $remaining = $this->getRemainingAttempts($request);
             // Show form again with error and submitted values
             $dbCheck = [
                 'required' => true,
                 'status' => false,
-                'error' => 'Connection failed: ' . $result['error'],
+                'error' => "Connection failed: {$result['error']} ({$remaining} attempts remaining)",
             ];
-            return $this->renderDatabaseSetup($dbCheck, $config);
+
+            return $this->renderDatabaseSetup($request, $dbCheck, $config);
         }
 
         // Update .env file
         if (!EnvironmentChecker::updateEnvFile($config)) {
+            $this->recordFailedAttempt($request);
+            $remaining = $this->getRemainingAttempts($request);
             $dbCheck = [
                 'required' => true,
                 'status' => false,
-                'error' => 'Failed to update .env file. Please check file permissions.',
+                'error' => "Failed to update .env file. Please check file permissions. ({$remaining} attempts remaining)",
             ];
-            return $this->renderDatabaseSetup($dbCheck, $config);
+
+            return $this->renderDatabaseSetup($request, $dbCheck, $config);
         }
 
-        // Success - reload page to reflect .env changes
+        // Success - clear rate limit and CSRF token
+        $this->clearRateLimit($request);
+        $this->regenerateCsrfToken($request);
+
+        // Reload page to reflect .env changes
+        return $this->redirectToHome();
+    }
+
+    /**
+     * Redirect to home page
+     *
+     * Used when setup is complete or when blocking access to setup routes.
+     *
+     * @return \Cake\Http\Response
+     */
+    protected function redirectToHome(): Response
+    {
         $response = new Response();
+
         return $response
             ->withStatus(302)
             ->withHeader('Location', '/')
@@ -192,11 +408,12 @@ class EnvironmentCheckMiddleware implements MiddlewareInterface
     /**
      * Render database setup page
      *
+     * @param \Psr\Http\Message\ServerRequestInterface $request Request
      * @param array $dbCheck Database check result
      * @param array|null $submittedConfig Submitted form values (used on error to preserve user input)
      * @return \Cake\Http\Response
      */
-    protected function renderDatabaseSetup(array $dbCheck, ?array $submittedConfig = null): Response
+    protected function renderDatabaseSetup(ServerRequestInterface $request, array $dbCheck, ?array $submittedConfig = null): Response
     {
         $error = $dbCheck['error'] ?? '';
         $errorHtml = $error ? '<div class="alert alert-error">' . htmlspecialchars($error) . '</div>' : '';
@@ -212,6 +429,10 @@ class EnvironmentCheckMiddleware implements MiddlewareInterface
         $mysqlSelected = $config['driver'] === 'mysql' ? 'selected' : '';
         $pgsqlSelected = $config['driver'] === 'pgsql' ? 'selected' : '';
         $sqliteSelected = $config['driver'] === 'sqlite' ? 'selected' : '';
+
+        // Generate CSRF token
+        $csrfToken = htmlspecialchars($this->getCsrfToken($request));
+        $csrfTokenName = self::CSRF_TOKEN_NAME;
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -339,6 +560,8 @@ class EnvironmentCheckMiddleware implements MiddlewareInterface
         {$errorHtml}
 
         <form action="/setup/database" method="POST" class="form">
+            <input type="hidden" name="{$csrfTokenName}" value="{$csrfToken}">
+
             <div class="form-group">
                 <label for="driver">Database Driver</label>
                 <select name="driver" id="driver" required>
@@ -403,6 +626,7 @@ class EnvironmentCheckMiddleware implements MiddlewareInterface
 HTML;
 
         $response = new Response();
+
         return $response
             ->withStatus(503)
             ->withType('text/html')

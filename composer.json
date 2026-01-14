@@ -4,14 +4,36 @@
     "license": "MIT",
     "type": "project",
     "homepage": "https://cakephp.org",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/CakePHPMitra/dbconfig.git",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/CakePHPMitra/spa.git",
+            "no-api": true
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/CakePHPMitra/Vite-Plugin.git",
+            "no-api": true
+        }
+    ],
     "require": {
         "php": ">=8.1",
         "cakephp/cakephp": "5.2.*",
         "cakephp/migrations": "^4.0.0",
         "cakephp/plugin-installer": "^2.0",
+        "cakephpmitra/dbconfig": "dev-main",
+        "cakephpmitra/spa": "dev-master",
+        "cakephpmitra/vite-plugin": "dev-main",
         "josegonzalez/dotenv": "^4.0",
         "mobiledetect/mobiledetectlib": "^4.8.03"
     },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require-dev": {
         "cakephp/bake": "^3.0.0",
         "cakephp/cakephp-codesniffer": "^5.0",
@@ -26,8 +48,7 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "src/",
-            "CakePhpViteHelper\\": "plugins/Vite-Plugin/src/"
+            "App\\": "src/"
         }
     },
     "autoload-dev": {

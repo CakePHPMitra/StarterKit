@@ -70,4 +70,74 @@ class PagesController extends AppController
             throw new NotFoundException();
         }
     }
+
+    /**
+     * Health check page - demonstrates SPA navigation
+     *
+     * @return void
+     */
+    public function health(): void
+    {
+        $this->set('status', 'healthy');
+        $this->set('checks', [
+            'php' => PHP_VERSION,
+            'cakephp' => Configure::version(),
+            'database' => $this->checkDatabase(),
+        ]);
+    }
+
+    /**
+     * Counter increment - demonstrates SPA reactive updates
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function increment()
+    {
+        $count = $this->request->getSession()->read('counter', 0) + 1;
+        $this->request->getSession()->write('counter', $count);
+
+        return $this->Spa->respond(['count' => $count]);
+    }
+
+    /**
+     * Counter decrement
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function decrement()
+    {
+        $count = $this->request->getSession()->read('counter', 0) - 1;
+        $this->request->getSession()->write('counter', $count);
+
+        return $this->Spa->respond(['count' => $count]);
+    }
+
+    /**
+     * Counter reset
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function reset()
+    {
+        $this->request->getSession()->write('counter', 0);
+
+        return $this->Spa->respond(['count' => 0]);
+    }
+
+    /**
+     * Check database connection status
+     *
+     * @return string
+     */
+    protected function checkDatabase(): string
+    {
+        try {
+            $connection = \Cake\Datasource\ConnectionManager::get('default');
+            $connection->getDriver()->connect();
+
+            return 'connected';
+        } catch (\Exception $e) {
+            return 'not configured';
+        }
+    }
 }
