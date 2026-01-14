@@ -1,0 +1,36 @@
+#!/bin/bash
+
+## Description: Set Redis environment variables in config/.env
+## Usage: set-env
+## Example: ddev set-env
+
+# Path to CakePHP's .env file
+ENV_FILE="config/.env"
+
+# Check if config/.env exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: $ENV_FILE does not exist. Please create it first."
+    exit 1
+fi
+
+# Redis configuration
+declare -A env_vars=(
+    ["REDIS_HOST"]="redis"
+    ["REDIS_PORT"]="6379"
+)
+
+for key in "${!env_vars[@]}"; do
+    value="${env_vars[$key]}"
+
+    if grep -q "^export ${key}=" "$ENV_FILE"; then
+        # Update existing key
+        sed -i "s/^export ${key}=.*/export ${key}=\"${value}\"/" "$ENV_FILE"
+        echo "Updated ${key}=${value}"
+    else
+        # Append new key
+        echo "export ${key}=\"${value}\"" >> "$ENV_FILE"
+        echo "Added ${key}=${value}"
+    fi
+done
+
+echo "Redis environment variables configured in $ENV_FILE"

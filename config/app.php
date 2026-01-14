@@ -1,11 +1,19 @@
 <?php
 
 use Cake\Cache\Engine\FileEngine;
+use Cake\Cache\Engine\RedisEngine;
 use Cake\Database\Connection;
 use Cake\Database\Driver\Mysql;
 use Cake\Log\Engine\FileLog;
 use Cake\Mailer\Transport\MailTransport;
 use function Cake\Core\env;
+
+/*
+ * Check if Redis is configured via environment variables.
+ * If REDIS_HOST is set, use Redis for caching and sessions.
+ * Otherwise, fall back to file-based caching and PHP sessions.
+ */
+$useRedis = (bool)env('REDIS_HOST', false);
 
 return [
     /*
@@ -94,20 +102,49 @@ return [
 
     /*
      * Configure the cache adapters.
+     * Uses Redis if REDIS_HOST is configured, otherwise falls back to file-based caching.
      */
-    'Cache' => [
+    'Cache' => $useRedis ? [
+        // Redis-based caching
+        'default' => [
+            'className' => RedisEngine::class,
+            'host' => env('REDIS_HOST'),
+            'port' => (int)env('REDIS_PORT', 6379),
+            'database' => 0,
+            'prefix' => 'myapp_',
+            'duration' => '+1 hours',
+        ],
+        '_cake_translations_' => [
+            'className' => RedisEngine::class,
+            'host' => env('REDIS_HOST'),
+            'port' => (int)env('REDIS_PORT', 6379),
+            'database' => 1,
+            'prefix' => 'myapp_cake_translations_',
+            'duration' => '+1 years',
+        ],
+        '_cake_model_' => [
+            'className' => RedisEngine::class,
+            'host' => env('REDIS_HOST'),
+            'port' => (int)env('REDIS_PORT', 6379),
+            'database' => 2,
+            'prefix' => 'myapp_cake_model_',
+            'duration' => '+1 years',
+        ],
+        '_cake_session_' => [
+            'className' => RedisEngine::class,
+            'host' => env('REDIS_HOST'),
+            'port' => (int)env('REDIS_PORT', 6379),
+            'database' => 3,
+            'prefix' => 'myapp_session_',
+            'duration' => '+1 day',
+        ],
+    ] : [
+        // File-based caching (default)
         'default' => [
             'className' => FileEngine::class,
             'path' => CACHE,
             'url' => env('CACHE_DEFAULT_URL', null),
         ],
-
-        /*
-         * Configure the cache used for general framework caching.
-         * Translation cache files are stored with this configuration.
-         * Duration will be set to '+2 minutes' in bootstrap.php when debug = true
-         * If you set 'className' => 'Null' core cache will be disabled.
-         */
         '_cake_translations_' => [
             'className' => FileEngine::class,
             'prefix' => 'myapp_cake_translations_',
@@ -116,13 +153,6 @@ return [
             'duration' => '+1 years',
             'url' => env('CACHE_CAKECORE_URL', null),
         ],
-
-        /*
-         * Configure the cache for model and datasource caches. This cache
-         * configuration is used to store schema descriptions, and table listings
-         * in connections.
-         * Duration will be set to '+2 minutes' in bootstrap.php when debug = true
-         */
         '_cake_model_' => [
             'className' => FileEngine::class,
             'prefix' => 'myapp_cake_model_',
@@ -415,7 +445,15 @@ return [
      *
      * To use database sessions, load the SQL file located at config/schema/sessions.sql
      */
-    'Session' => [
+    'Session' => $useRedis ? [
+        // Redis-based sessions
+        'defaults' => 'cache',
+        'handler' => [
+            'config' => '_cake_session_',
+        ],
+        'timeout' => 1440, // 24 hours in minutes
+    ] : [
+        // PHP default sessions (file-based)
         'defaults' => 'php',
     ],
 
