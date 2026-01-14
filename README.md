@@ -1,53 +1,109 @@
-# CakePHP Application Skeleton
+# CakePHP 5 StarterKit
 
-![Build Status](https://github.com/cakephp/app/actions/workflows/ci.yml/badge.svg?branch=5.x)
-[![Total Downloads](https://img.shields.io/packagist/dt/cakephp/app.svg?style=flat-square)](https://packagist.org/packages/cakephp/app)
-[![PHPStan](https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg?style=flat-square)](https://github.com/phpstan/phpstan)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CakePHP 5.x](https://img.shields.io/badge/CakePHP-5.x-red.svg)](https://cakephp.org)
 
-A skeleton for creating applications with [CakePHP](https://cakephp.org) 5.x.
+A ready-to-use CakePHP 5 starter kit with DDEV, Redis support, and environment validation.
 
-The framework source code can be found here: [cakephp/cakephp](https://github.com/cakephp/cakephp).
+---
+
+## Features
+
+- CakePHP 5.x skeleton
+- DDEV local development environment
+- Redis caching & sessions (optional, falls back to file-based)
+- Environment prerequisite validation before boot
+- Database connection setup wizard
+
+## Requirements
+
+- PHP 8.1+
+- Required PHP extensions: intl, mbstring, openssl, pdo, json
+- Composer
+- Node.js & npm (if using frontend assets)
+- MySQL/MariaDB or PostgreSQL
+- DDEV (optional, for local development)
 
 ## Installation
 
-1. Download [Composer](https://getcomposer.org/doc/00-intro.md) or update `composer self-update`.
-2. Run `php composer.phar create-project --prefer-dist cakephp/app [app_name]`.
+### Using DDEV (Recommended)
 
-If Composer is installed globally, run
+1. Clone the repository:
 
-```bash
-composer create-project --prefer-dist cakephp/app
-```
+   ```bash
+   git clone https://github.com/CakePHPMitra/StarterKit.git my-app
+   cd my-app
+   ```
 
-In case you want to use a custom app dir name (e.g. `/myapp/`):
+2. Start DDEV:
 
-```bash
-composer create-project --prefer-dist cakephp/app myapp
-```
+   ```bash
+   ddev start
+   ```
 
-You can now either use your machine's webserver to view the default home page, or start
-up the built-in webserver with:
+3. Install dependencies:
 
-```bash
-bin/cake server -p 8765
-```
+   ```bash
+   ddev composer install
+   ```
 
-Then visit `http://localhost:8765` to see the welcome page.
+4. Launch the application:
 
-## Update
+   ```bash
+   ddev launch
+   ```
 
-Since this skeleton is a starting point for your application and various files
-would have been modified as per your needs, there isn't a way to provide
-automated upgrades, so you have to do any updates manually.
+### Manual Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/CakePHPMitra/StarterKit.git my-app
+   cd my-app
+   ```
+
+2. Install PHP dependencies:
+
+   ```bash
+   composer install
+   ```
+
+3. Install Node dependencies (if applicable):
+
+   ```bash
+   npm install
+   ```
+
+4. Configure environment:
+
+   ```bash
+   cp config/.env.example config/.env
+   ```
+
+5. Set directory permissions:
+
+   ```bash
+   chmod -R 775 logs tmp
+   ```
+
+6. Start the built-in server:
+
+   ```bash
+   bin/cake server -p 8765
+   ```
+
+7. Visit `http://localhost:8765`
 
 ## Configuration
 
-Read and edit the environment specific `config/app_local.php` and set up the
-`'Datasources'` and any other configuration relevant for your application.
-Other environment agnostic settings can be changed in `config/app.php`.
+- Copy `config/.env.example` to `config/.env` and configure your environment
+- Redis is automatically enabled when `REDIS_HOST` is set
+- Database configuration can be done via the setup wizard or manually in `.env`
 
-## Layout
+## Contributing
 
-The app skeleton uses [Milligram](https://milligram.io/) (v1.3) minimalist CSS
-framework by default. You can, however, replace it with any other library or
-custom styles.
+Contributions, issues, and feature requests are welcome!
+
+## License
+
+This project is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

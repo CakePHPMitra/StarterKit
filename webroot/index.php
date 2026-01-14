@@ -25,6 +25,11 @@ if (PHP_SAPI === 'cli-server') {
         return false;
     }
 }
+
+// Run environment prerequisite checks before loading the application
+// This will exit with error page if any check fails
+require dirname(__DIR__) . '/config/prerequisite.php';
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Application;
