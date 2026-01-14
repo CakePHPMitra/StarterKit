@@ -1,3 +1,4 @@
 hooks:
   post-start:
     - exec-host: ddev set-env
+    - exec: composer install --no-interaction

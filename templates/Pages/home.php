@@ -39,4 +39,22 @@ $this->assign('description', 'Welcome to Cakephp5 - A modern lightweight PHP app
             making local development a breeze.
         </p>
     </div>
+    <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 15px; color: #fd79a8;">Vite Integration</h3>
+        <p style="color: #666; line-height: 1.6;">
+            Modern frontend asset bundling with Hot Module Replacement (HMR).
+            Changes to CSS and JS are reflected instantly without page reload.
+        </p>
+    </div>
+</div>
+
+<div style="margin-top: 40px;">
+    <h2 style="margin-bottom: 20px; color: #333;">Vite HMR Demo</h2>
+    <div class="vite-demo-box">
+        <h4>Hot Module Replacement Active</h4>
+        <p>Edit <code>resources/css/app.css</code> to change this box's style instantly!</p>
+    </div>
+    <p style="margin-top: 15px; color: #666; font-size: 1rem;">
+        Try changing the gradient colors in <code>resources/css/app.css</code> while running <code>npm run dev</code> to see HMR in action.
+    </p>
 </div>

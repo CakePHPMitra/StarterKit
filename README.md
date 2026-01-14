@@ -14,6 +14,7 @@ A ready-to-use CakePHP 5 starter kit with DDEV, Redis support, and environment v
 - Redis caching & sessions (optional, falls back to file-based)
 - Environment prerequisite validation before boot
 - Database connection setup wizard
+- Vite integration with Hot Module Replacement (HMR)
 
 ## Requirements
 
@@ -99,6 +100,75 @@ A ready-to-use CakePHP 5 starter kit with DDEV, Redis support, and environment v
 - Copy `config/.env.example` to `config/.env` and configure your environment
 - Redis is automatically enabled when `REDIS_HOST` is set
 - Database configuration can be done via the setup wizard or manually in `.env`
+
+## Vite Integration
+
+This starter kit includes [CakePhpViteHelper](https://github.com/CakePHPMitra/Vite-Plugin) for modern frontend asset bundling with Hot Module Replacement.
+
+### Setup Vite
+
+```bash
+bin/cake vite-helper install
+```
+
+This will install Node dependencies and configure Vite for your project. The installer automatically configures Vite to work with:
+- **DDEV** - Uses `DDEV_HOSTNAME` environment variable
+- **Local network** - Detects Ethernet/Wi-Fi IP for LAN access
+- **Localhost** - Falls back to `0.0.0.0` for local development
+
+### DDEV Configuration
+
+Add the following to your `.ddev/config.yaml` to expose the Vite port:
+
+```yaml
+web_extra_exposed_ports:
+  - name: vite
+    container_port: 5173
+    http_port: 5172
+    https_port: 5173
+```
+
+Then restart DDEV:
+
+```bash
+ddev restart
+```
+
+### Development
+
+Run the Vite dev server for HMR:
+
+```bash
+# Local development
+npm run dev
+
+# With DDEV
+ddev exec npm run dev
+```
+
+The Vite dev server will be accessible at:
+- **Local**: `http://localhost:5173` or `http://<your-ip>:5173`
+- **DDEV**: `https://your-project.ddev.site:5173`
+
+### Production Build
+
+Build assets for production:
+
+```bash
+npm run build
+```
+
+### Usage in Templates
+
+Assets are loaded via the Vite helper in your layout:
+
+```php
+<?= $this->Vite->asset(['resources/js/app.js', 'resources/css/app.css']) ?>
+```
+
+Frontend assets are located in the `resources/` directory:
+- `resources/js/app.js` - Main JavaScript entry
+- `resources/css/app.css` - Main stylesheet
 
 ## Contributing
 

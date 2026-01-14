@@ -1,0 +1,3 @@
+[submodule "plugins/Vite-Plugin"]
+	path = plugins/Vite-Plugin
+	url = git@github.com:CakePHPMitra/Vite-Plugin.git

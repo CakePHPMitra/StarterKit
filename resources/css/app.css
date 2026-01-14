@@ -1,0 +1,41 @@
+/**
+ * CakePHP 5 StarterKit - Application Styles
+ *
+ * This file is processed by Vite and supports Hot Module Replacement (HMR)
+ * in development mode.
+ */
+
+/* Vite HMR Demo - Change this color to see instant updates! */
+.vite-demo-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.vite-demo-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.vite-demo-box h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.vite-demo-box p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.vite-demo-box code {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
