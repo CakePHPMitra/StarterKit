@@ -9,11 +9,14 @@ use Cake\Mailer\Transport\MailTransport;
 use function Cake\Core\env;
 
 /*
- * Check if Redis is configured via environment variables.
- * If REDIS_HOST is set, use Redis for caching and sessions.
+ * Check if Redis is configured via environment variables AND the extension is available.
+ * If REDIS_HOST is set and the redis extension is loaded, use Redis for caching and sessions.
  * Otherwise, fall back to file-based caching and PHP sessions.
+ *
+ * Note: The prerequisite.php check will show a friendly error page if REDIS_HOST is set
+ * but the extension is missing. This check here is a defensive fallback.
  */
-$useRedis = (bool)env('REDIS_HOST', false);
+$useRedis = (bool)env('REDIS_HOST', false) && extension_loaded('redis');
 
 return [
     /*

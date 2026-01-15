@@ -109,6 +109,23 @@ if (file_exists($packageJsonPath)) {
     }
 }
 
+// Check Redis extension (only if REDIS_HOST is configured)
+$redisHost = getenv('REDIS_HOST') ?: ($_ENV['REDIS_HOST'] ?? ($_SERVER['REDIS_HOST'] ?? null));
+if (!empty($redisHost)) {
+    $redisExtLoaded = extension_loaded('redis');
+    $checks['redis'] = [
+        'name' => 'redis',
+        'description' => 'Redis extension for caching (required when REDIS_HOST is set)',
+        'host' => $redisHost,
+        'extension_loaded' => $redisExtLoaded,
+        'status' => $redisExtLoaded,
+    ];
+
+    if (!$redisExtLoaded) {
+        $errors[] = "PHP 'redis' extension is not loaded but REDIS_HOST is configured. Either install the redis extension or remove REDIS_HOST to use file-based caching.";
+    }
+}
+
 // If there are errors, render the checklist page
 if (!empty($errors)) {
     http_response_code(503);
@@ -125,6 +142,7 @@ function renderPrerequisiteChecklist(array $checks): void
     $directories = renderDirectories($checks['directories']);
     $vendor = renderVendor($checks['vendor']);
     $node = isset($checks['node']) ? renderNode($checks['node']) : null;
+    $redis = isset($checks['redis']) ? renderRedis($checks['redis']) : null;
 
     echo <<<HTML
 <!DOCTYPE html>
@@ -279,6 +297,17 @@ HTML;
 HTML;
     }
 
+    // Only show Redis section if REDIS_HOST is configured
+    if ($redis !== null) {
+        echo <<<HTML
+
+            <div class="section">
+                <h2><span>🔴</span> Redis Cache</h2>
+                <div class="items">{$redis}</div>
+            </div>
+HTML;
+    }
+
     echo <<<HTML
         </div>
 
@@ -338,4 +367,15 @@ function renderNode(array $node): string
     $icon = $node['status'] ? '✓' : '✗';
     $message = $node['status'] ? 'Installed' : 'Run: npm install';
     return "<div class=\"item {$status}\"><span class=\"status-icon\">{$icon}</span><div class=\"item-content\"><strong>node_modules/</strong><span class=\"description\">{$message}</span></div></div>";
+}
+
+function renderRedis(array $redis): string
+{
+    $status = $redis['status'] ? 'success' : 'error';
+    $icon = $redis['status'] ? '✓' : '✗';
+    $host = htmlspecialchars($redis['host']);
+    $message = $redis['status']
+        ? "Extension loaded, host: {$host}"
+        : "Install redis extension or unset REDIS_HOST";
+    return "<div class=\"item {$status}\"><span class=\"status-icon\">{$icon}</span><div class=\"item-content\"><strong>redis extension</strong><span class=\"description\">{$message}</span></div></div>";
 }

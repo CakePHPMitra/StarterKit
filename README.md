@@ -100,8 +100,27 @@ A ready-to-use CakePHP 5 starter kit with DDEV, Redis support, and environment v
 ## Configuration
 
 - Copy `config/.env.example` to `config/.env` and configure your environment
-- Redis is automatically enabled when `REDIS_HOST` is set
+- Redis is automatically enabled when `REDIS_HOST` is set (falls back to file-based caching if unavailable)
 - Database configuration can be done via the setup wizard or manually in `.env`
+
+## Environment Validation
+
+The starter kit includes automatic environment validation:
+
+### Prerequisites (before autoload)
+- PHP extensions: intl, mbstring, openssl, pdo, json
+- Vendor directory (`composer install`)
+- Node modules (if using Vite)
+- Writable directories: `logs/`, `tmp/`
+
+### Runtime Checks (middleware)
+- **Database**: Connection validation with setup wizard
+- **Redis**: Optional - validates connection if `REDIS_HOST` is configured
+- **Vite Manifest**: Validates `webroot/build/.vite/manifest.json` when dev server is not running
+
+If any check fails, a friendly setup page is displayed with clear instructions.
+
+**Note:** Comment or remove `REDIS_HOST` from `config/.env` if not using Redis.
 
 ## Routing
 
@@ -198,6 +217,7 @@ This starter kit includes [CakeSPA](https://github.com/CakePHPMitra/spa) for ser
 - **SPA Navigation** - Load pages via AJAX with History API support
 - **Reactive Components** - Livewire-like reactivity without writing JavaScript
 - **CSRF Compatible** - Full security integration with CakePHP
+- **Subdirectory Support** - Automatic base URL detection for alias deployments
 
 ### Usage
 

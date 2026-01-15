@@ -49,6 +49,61 @@ class EnvironmentChecker
     }
 
     /**
+     * Test Redis connection with provided configuration
+     *
+     * @param array $config Redis configuration (host, port, timeout)
+     * @return array ['success' => bool, 'error' => string|null, 'info' => array|null]
+     */
+    public static function testRedisConnection(array $config = []): array
+    {
+        // Check if redis extension is loaded
+        if (!extension_loaded('redis')) {
+            return [
+                'success' => false,
+                'error' => 'Redis PHP extension is not installed',
+                'info' => null,
+            ];
+        }
+
+        $host = $config['host'] ?? (getenv('REDIS_HOST') ?: '127.0.0.1');
+        $port = (int)($config['port'] ?? (getenv('REDIS_PORT') ?: 6379));
+        $timeout = (float)($config['timeout'] ?? 2.0);
+
+        try {
+            $redis = new \Redis();
+            $connected = $redis->connect($host, $port, $timeout);
+
+            if (!$connected) {
+                return [
+                    'success' => false,
+                    'error' => "Failed to connect to Redis at {$host}:{$port}",
+                    'info' => null,
+                ];
+            }
+
+            // Get server info
+            $info = $redis->info('server');
+            $redis->close();
+
+            return [
+                'success' => true,
+                'error' => null,
+                'info' => [
+                    'host' => $host,
+                    'port' => $port,
+                    'redis_version' => $info['redis_version'] ?? 'unknown',
+                ],
+            ];
+        } catch (\RedisException $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'info' => null,
+            ];
+        }
+    }
+
+    /**
      * Update .env file with database configuration
      *
      * SECURITY NOTES:
